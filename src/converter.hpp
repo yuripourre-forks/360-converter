@@ -375,7 +375,7 @@ namespace Converter
     class Stereo : public Converter
     {
     public:
-        Stereo(Image t_stereo) : stereo(t_stereo)
+        Stereo(Image t_stereo, FaceID t_faceID) : stereo(t_stereo), faceID(t_faceID)
         {
             stereo_h = stereo.h;
             stereo_w = stereo.w;
@@ -386,7 +386,10 @@ namespace Converter
             return stereo;
         }
 
+        Equi toEqui();
+
     private:
+        FaceID faceID;
         Image stereo;
     };
 
@@ -492,8 +495,9 @@ namespace Converter
         return toFace().toCube();
     }
 
-    Stereo Equi::toStereo(FaceID faceID = DOWN)
+    Stereo Equi::toStereo(FaceID t_faceID = DOWN)
     {
+        FaceID faceID = t_faceID;
         stereo_h = equi_h;
         stereo_w = equi_w / 2;
 
@@ -532,7 +536,49 @@ namespace Converter
         else
             img = rotate(img, -M_PI_2);
         
-        return Stereo(img);
+        return Stereo(img, faceID);
+    }
+
+    Equi Stereo::toEqui()
+    {
+        equi_h = stereo.h;
+        equi_w = stereo.w * 2;
+
+        Image img = {equi_h, equi_w, new uint8_t[equi_w * equi_h * CHANNEL_NUM]};
+        Image stereo_tmp = stereo;
+
+        unsigned int org_x = stereo_w / 2;
+        unsigned int org_y = stereo_h / 2;
+
+        if (faceID == DOWN)
+            stereo_tmp = rotate(stereo_tmp, -M_PI_2);
+        else
+            stereo_tmp = rotate(stereo_tmp);
+
+        for (int i = 0; i < stereo_tmp.h; ++i)
+        {
+            for (int j = 0; j < stereo_tmp.w; ++j)
+            {
+                double rho, theta;
+                cart2pol(j - org_x, i - org_y, rho, theta);
+
+                if (rho <= stereo_tmp.w / 2)
+                {
+                    if (theta < 0.0)
+                        theta += 360.0;
+                    
+                    int x, y;
+                    x = (faceID == DOWN ? theta / 360 * equi_w : (1 - theta / 360) * equi_w);
+                    y = (faceID == DOWN ? equi_h - int(rho * 2.0) : int(rho * 2.0));
+
+                    for (int k = 0; k < CHANNEL_NUM; ++k)
+                    {
+                        img.img[CHANNEL_NUM * (y * img.w + x) + k] = stereo_tmp.img[CHANNEL_NUM * (i * stereo_tmp.w + j) + k];
+                    }
+                }
+            }
+        }
+        return Equi(img);
     }
 
 } // namespace Converter

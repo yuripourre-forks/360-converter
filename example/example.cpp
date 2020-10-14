@@ -38,5 +38,8 @@ int main(int argc, char **argv)
 	img = equi.toStereo(Converter::TOP).getStereo();
 	stbi_write_png("out/stereo.png", img.w, img.h, CHANNEL_NUM, img.img, img.w * CHANNEL_NUM);
 
+	// img = equi.toStereo(Converter::TOP).toEqui().getEqui();
+	// stbi_write_png("out/equi.png", img.w, img.h, CHANNEL_NUM, img.img, img.w * CHANNEL_NUM);
+
 	return 0;
 }
