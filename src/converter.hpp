@@ -528,6 +528,12 @@ namespace Converter
                             equi.img[CHANNEL_NUM * (y * equi.w + x) + k];
                     }
                 }
+                else
+                {
+                    for (int k = 0; k < CHANNEL_NUM; ++k)
+                        img.img[CHANNEL_NUM * (i * img.w + j) + k] = 0;
+                }
+                
             }
         }
 
